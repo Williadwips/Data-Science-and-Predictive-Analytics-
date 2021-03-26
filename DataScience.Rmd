@@ -1,0 +1,421 @@
+---
+title: "Ilmu Data dan Analisis Prediktif dalam Gambar"
+author: "Willia Dwi Puspitasari // Teknik Informatika // UIN Maulana Malik Ibrahim Malang // Dosen Pengampu: Prof. Dr. Suhartono, M.Kom"
+date: "22 Maret 2021" 
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: flatly
+    toc_float: true
+    collapsed: true
+    smooth_scroll: true
+---
+
+# 1.Install Package (EBImage)
+
+r Biocpkg ("EBImage") adalah package R yang didistribusikan sebagai bagian dari proyek Bioconductor. Untuk menginstal package.Setelah package R ("EBImage") diinstal, dapat dimuat dengan perintah berikut.
+
+Catatan: Jika Anda tidak dapat menginstal package EBImage karena alasan apa pun (mis., Sistem operasi atau ketidakcocokan versi, ini bukan masalah karena Anda seharusnya dapat menggunakan package jpeg sebagai gantinya.
+
+```{r}
+# install.packages("jpeg")
+library(jpeg)
+```
+
+```{r}
+#Impor library
+library("EBImage")
+```
+
+# 2.Membaca, menampilkan dan menulis gambar
+
+Fungsionalitas Basic R package ("EBImage") mencakup membaca, menulis, dan menampilkan gambar. Gambar dibaca menggunakan fungsi readImage, yang mengambil nama file atau URL sebagai masukan. Untuk memulai, mari kita muat gambar sampel yang didistribusikan dengan package.
+```{r}
+f = system.file("images", "sample.png", package="EBImage")
+img = readImage(f)
+```
+
+Package R ("EBImage") saat ini mendukung tiga format file gambar: jpeg, png dan tiff. Format gambar tambahan dapat diimpor menggunakan R GitHubPkg ("aoles / RBioFormats"), yang menambahkan dukungan untuk berbagai format file termasuk data gambar mikroskopis dan metadata.
+
+Gambar yang diimpor dapat divisualisasikan dengan tampilan fungsi ().
+```{r}
+display(img, method="browser")
+```
+
+Pintasan mouse atau keyboard memungkinkan memperbesar dan memperkecil gambar, menggeser, dan berputar melalui beberapa bingkai gambar. Gambar juga dapat ditampilkan menggunakan metode plotting R inti, yang memungkinkan untuk menggabungkan gambar dengan fungsionalitas plot lainnya, misalnya, menambahkan label teks di atas gambar.
+```{r}
+display(img, method="raster")
+text(x = 20, y = 20, label = "Colorful Parrots", adj = c(0,1), col = "orange", cex = 2)
+```
+Grafik yang ditampilkan di perangkat R dapat disimpan menggunakan paackage R ("base") R fungsi dev.print atau dev.copy. Misalnya, mari simpan gambar beranotasi kami sebagai file JPEG dan verifikasi ukurannya pada disk.
+
+#5
+```{r}
+filename = "parrots.jpg"
+dev.print(jpeg, filename = filename , width = dim(img)[1], height = dim(img)[2])
+```
+```{r}
+file.info(filename)$size
+```
+
+Default tampilan dapat diubah secara global dengan menyetel "opsi (" EBImage.display ") ke" browser "atau" raster "". Ini berguna, misalnya, untuk melihat pratinjau gambar di dalam RStudio.
+
+Dimungkinkan juga untuk membaca dan melihat gambar berwarna,
+```{r}
+imgcol = readImage(system.file("images", "sample-color.png", package="EBImage"))
+display(imgcol)
+```
+
+Gambar mungkin berisi banyak bingkai, dalam hal ini gambar dapat ditampilkan sekaligus dalam pengaturan kisi dengan menetapkan argumen fungsi all = TRUE.
+```{r}
+nuc = readImage(system.file("images", "nuclei.tif", package="EBImage"))
+display(nuc, method = "raster", all = TRUE)
+```
+
+Selain mengimpor gambar, gambar dapat diekspor (disimpan) ke file menggunakan EBImage :: writeImage (). Gambar yang kami muat adalah file JPEG. Untuk menyimpan gambar ini sebagai file JPEG, format JPEG memungkinkan untuk mengatur nilai kualitas antara 1 dan 100 untuk mencerminkan tingkat kompresi gambar yang diinginkan. Nilai default dari argumen kualitas writeImage adalah 100. Nilai yang lebih kecil menghasilkan gambar dengan ukuran lebih kecil, tetapi resolusinya lebih buruk (kurang detail). 
+```{r}
+writeImage(imgcol, "sample.jpeg", quality = 85)
+```
+
+# 3.Representasi data gambar
+
+EBImage menggunakan Image kelas khusus package untuk menyimpan dan memproses gambar. Ini memperluas array kelas dasar R, dan semua fungsi package R ("EBImage") juga bisa dipanggil langsung pada matriks dan array. Anda dapat mengetahui lebih lanjut tentang kelas ini dengan mengetik Gambar. Mari kita intip ke dalam struktur internal sebuah objek Image.
+```{r}
+str(img)
+```
+
+Slot Data berisi larik numerik intensitas piksel. Kita melihat bahwa dalam kasus ini arraynya adalah dua dimensi, dengan 768 kali 512 elemen, dan sesuai dengan lebar dan tinggi piksel gambar. Dimensi ini dapat diakses menggunakan fungsi dim, seperti array biasa.
+```{r}
+dim(img)
+```
+Data gambar dapat diakses sebagai array R biasa menggunakan aksesor imageData.
+```{r}
+imageData(img)[1:3, 1:6]
+```
+Metode as.array () bisa digunakan untuk memaksa Image ke array
+```{r}
+is.Image( as.array(img) )
+```
+Distribusi intensitas piksel dapat diplot dalam histogram, dan jangkauannya diperiksa menggunakan fungsi jangkauan.
+```{r}
+hist(img)
+```
+
+```{r}
+range(img)
+```
+Ringkasan berguna dari objek Image juga disediakan oleh metode show, yang dipanggil jika kita hanya mengetikkan nama objeknya.
+```{r}
+img
+```
+Untuk representasi yang lebih ringkas tanpa pratinjau larik intensitas, gunakan metode cetak dengan argumen singkat disetel ke TRUE.
+```{r}
+print(img, short=TRUE)
+```
+Gambar berwarna didasarkan pada 3 saluran (RBG).
+```{r}
+print(imgcol, short=TRUE)
+```
+Di sisi lain, jika colorMode adalah Warna, maka dimensi ketiga diasumsikan memiliki saluran warna yang berbeda, dan hanya dimensi keempat dan lebih tinggi yang digunakan untuk beberapa bingkai gambar. imgcol berisi tiga saluran warna, yang sesuai dengan intensitas merah, hijau, dan biru pada foto. Namun, hal ini tidak harus demikian, dan jumlah saluran warna dapat berubah-ubah.
+
+Bidang "frames.total" dan "frames.render" yang ditampilkan oleh ringkasan objek sesuai dengan jumlah total bingkai yang terdapat dalam gambar, dan dengan jumlah bingkai yang dirender. Angka-angka ini dapat diakses menggunakan fungsi numberOfFrames dengan menentukan argumen type.
+```{r}
+numberOfFrames(imgcol, type = "render")
+```
+```{r}
+numberOfFrames(imgcol, type = "total")
+```
+Bingkai gambar dapat diekstraksi menggunakan getFrame dan getFrames. getFrame mengembalikan bingkai ke-i yang terdapat dalam gambar y. Untuk type = "render" memiliki fungsi mengembalikan gambar ke-i seperti yang ditunjukkan oleh fungsi tampilan. Meskipun getFrame hanya mengembalikan satu bingkai, getFrames mengambil daftar bingkai yang dapat berfungsi sebagai masukan untuk fungsi lapply-family.
+
+Mari kita lihat data nuklir / seluler, yang berisi total 4 frame yang sesuai dengan 4 gambar skala abu-abu yang terpisah, seperti yang ditunjukkan oleh "frames.render".
+```{r}
+nuc
+```
+
+# 4.Manajemen Warna
+
+Fungsi colorMode dapat digunakan untuk mengakses dan mengubah properti ini, memodifikasi mode rendering gambar. Misalnya, jika kita mengambil gambar Warna dan mengubah modenya menjadi skala abu-abu, maka gambar tidak akan ditampilkan sebagai gambar berwarna lagi, melainkan sebagai tiga bingkai skala abu-abu terpisah yang sesuai dengan saluran merah, hijau, dan biru. Fungsi colorMode tidak mengubah konten sebenarnya dari gambar tetapi hanya mengubah cara gambar dirender oleh package R ("EBImage").
+```{r}
+colorMode(imgcol) = Grayscale
+display(imgcol, all=TRUE)
+```
+Konversi ruang warna antara gambar skala abu-abu dan Warna dilakukan menggunakan saluran fungsi. Memungkinkan untuk mengubah salah satu cara antara mode, dan dapat digunakan untuk mengekstrak saluran warna. 
+```{r}
+colorMat = matrix(rep(c("red","green", "#0000ff"), 25), 5, 5)
+colorImg = Image(colorMat)
+colorImg
+```
+
+# 5.Manipulasi Gambar
+Gambar dapat dengan mudah dimanipulasi oleh salah satu operator aritmatika R. Misalnya, kita dapat menghasilkan gambar negatif hanya dengan mengurangkan gambar dari nilai maksimumnya.
+```{r}
+img_neg = max(img) - img
+display( img_neg )
+```
+
+kita juga dapat meningkatkan kecerahan gambar melalui penambahan, menyesuaikan kontras melalui perkalian, dan menerapkan koreksi gamma melalui eksponen.
+```{r}
+img_comb = combine(
+  img,
+  img + 0.3,
+  img * 2,
+  img ^ 0.5
+)
+
+display(img_comb, all=TRUE)
+```
+
+```{r}
+img_crop = img[366:749, 58:441]
+img_thresh = img_crop > .5
+display(img_thresh)
+```
+
+```{r}
+img_thresh
+```
+
+```{r}
+img_t = transpose(img)
+display( img_t )
+```
+
+# 6.Transformasi Spasial
+
+Kita hanya melihat satu jenis transformasi spasial, transposisi, tetapi masih banyak lagi, misalnya translasi, rotasi, refleksi, dan penskalaan. translate memindahkan bidang gambar dengan vektor dua dimensi yang ditentukan sedemikian rupa sehingga piksel yang berakhir di luar wilayah gambar dipotong, dan piksel yang masuk ke wilayah gambar disetel ke latar belakang.
+```{r}
+img_translate = translate(img, c(100,-50))
+display(img_translate)
+```
+
+```{r}
+img_rotate = rotate(img, 30, bg.col = "white")
+display(img_rotate)
+```
+
+Untuk menskalakan gambar ke dimensi yang diinginkan, gunakan pengubahan ukuran. Jika Anda hanya memberikan salah satu dari lebar atau tinggi, dimensi lainnya secara otomatis dihitung dengan tetap menggunakan rasio aspek asli.
+```{r}
+img_resize = resize(img, w=256, h=256)
+display(img_resize )
+```
+
+Fungsi flip dan flop masing-masing mencerminkan gambar di sekitar sumbu horizontal dan vertikal gambar.
+```{r}
+img_flip = flip(img)
+img_flop = flop(img)
+
+display(combine(img_flip, img_flop), all=TRUE)
+```
+
+Transformasi linier spasial diimplementasikan menggunakan transformasi affine umum. Ini memetakan koordinat piksel gambar px menggunakan matriks transformasi 3x2 m. Misalnya, pemetaan tipis horizontal dapat diterapkan dengan:
+```{r}
+m =  matrix(c(1, -.5, 128, 0, 1, 0), nrow=3, ncol=2)
+img_affine = affine(img, m)
+display( img_affine )
+```
+
+# 7.Filtering
+
+Gambar biner adalah gambar yang hanya berisi dua set piksel, dengan nilai, katakanlah 0 dan 1, mewakili piksel latar belakang dan latar depan.
+```{r}
+shapes = readImage(system.file('images', 'shapes.png', package='EBImage'))
+logo = shapes[110:512,1:130]
+display(logo)
+```
+
+```{r}
+kern = makeBrush(5, shape='diamond')
+display(kern, interpolate=FALSE)
+```
+
+```{r}
+logo_erode= erode(logo, kern)
+logo_dilate = dilate(logo, kern)
+
+display(combine(logo_erode, logo_dilate), all=TRUE)
+```
+
+# 8.Segmentasi Gambar
+
+Segmentasi gambar biasanya digunakan untuk mengidentifikasi objek dalam gambar. Objek terhubung yang tidak bersentuhan dapat disegmentasi menggunakan fungsi bwlabel, sedangkan DAS dan propagasi menggunakan algoritma yang lebih canggih yang dapat memisahkan objek yang saling bersentuhan.
+
+```{r}
+logo_label = bwlabel(logo)
+table(logo_label)
+```
+```{r}
+max(logo_label)
+```
+```{r}
+display( normalize(logo_label) )
+```
+```{r}
+display( colorLabels(logo_label) )
+```
+
+# 9.Manipulasi Objek
+
+Package R ("EBImage") mendefinisikan objek sebagai sekumpulan piksel dengan nilai integer unik yang sama. Biasanya citra yang mengandung objek merupakan hasil dari fungsi segmentasi. Objek dapat dihapus dari gambar tersebut. Secara default, setelah penghapusan objek, semua objek yang tersisa diberi label ulang sehingga ID objek tertinggi sesuai. 
+```{r}
+objects = list(
+    seq.int(from = 2, to = max(logo_label), by = 2),
+    seq.int(from = 1, to = max(logo_label), by = 2)
+    )
+logos = combine(logo_label, logo_label)
+z = rmObjects(logos, objects, reenumerate=FALSE)
+display(z, all=TRUE)
+```
+```{r}
+
+```
+
+# 10.Segmen Sel
+
+Disimpulkan vignette ini dengan menerapkan fungsi yang dijelaskan sebelumnya untuk tugas segmentasi sel. Tujuannya adalah untuk mengidentifikasi secara komputasi dan mengkarakterisasi secara kualitatif sel dalam sampel gambar mikroskop. Pendekatan ini dapat diterapkan pada koleksi yang berisi ribuan gambar.
+
+Dimulai dengan memuat gambar inti dan badan sel. Untuk memvisualisasikan sel, dilapisi gambar-gambar ini sebagai saluran hijau dan biru dari gambar berwarna palsu.
+```{r}
+nuc = readImage(system.file('images', 'nuclei.tif', package='EBImage'))
+cel = readImage(system.file('images', 'cells.tif', package='EBImage'))
+
+cells = rgbImage(green=1.5*cel, blue=nuc)
+display(cells, all = TRUE)
+```
+
+```{r}
+nmask = thresh(nuc, w=10, h=10, offset=0.05)
+nmask = opening(nmask, makeBrush(5, shape='disc'))
+nmask = fillHull(nmask)
+nmask = bwlabel(nmask)
+
+display(nmask, all=TRUE)
+```
+
+```{r}
+ctmask = opening(cel>0.1, makeBrush(5, shape='disc'))
+cmask = propagate(cel, seeds=nmask, mask=ctmask)
+
+display(ctmask, all=TRUE)
+```
+
+```{r}
+segmented = paintObjects(cmask, cells, col='#ff00ff')
+segmented = paintObjects(nmask, segmented, col='#ffff00')
+
+display(segmented, all=TRUE)
+```
+
+# 11.Seni, Pemrosesan Gambar dan Representasi Spektral Sinyal
+
+Mari kita coba menginterogasi gambar animasi dibawah ini. 
+```{r}
+library(EBImage)
+
+image <- readImage("C://Users/asus/Pictures/doraemon.jpg")
+
+display(image, method = "raster", all = TRUE)
+```
+
+```{r}
+# Intensity Histogram
+hist(image)
+```
+
+```{r}
+# Generate negative image
+img_neg <- max(image) - image
+display( img_neg )
+```
+
+```{r}
+# dim: 633 1000    3
+
+# crop and threshold
+img_crop <- image  
+img_thresh <- img_crop > 0.55
+display(img_thresh)
+```
+
+```{r}
+# Low-pass Filter/smooth
+w <- makeBrush(size = 31, shape = 'gaussian', sigma = 5)
+img_flo <- filter2(image, w)
+display(img_flo)
+```
+
+```{r}
+# High-pass filtering Laplace Filter/Edge detection
+fhi <- matrix(1, nrow = 3, ncol = 3)
+fhi[2, 2] <- -7
+img_fhi <- filter2(image, fhi)
+display(img_fhi)
+```
+
+```{r}
+# Denoising
+img_median <- medianFilter(image, size=5, cacheSize=20000)
+display(img_median)
+```
+
+```{r}
+# Segmentation
+grayimage <- channel(image,"gray")
+threshold <- otsu(grayimage)
+CC_th <- combine( mapply(function(frame, th) frame > th, 
+                         getFrames(image), 
+                         threshold, SIMPLIFY=FALSE) )
+display(CC_th, all=TRUE)
+```
+
+```{r}
+disc <- makeBrush(51, "disc")
+disc <- disc/sum(disc)
+offset <- 0.0001
+CC_bg <- filter2(image, disc)
+CC_th <- image < CC_bg + offset
+display(CC_th, all=TRUE)
+```
+
+```{r}
+# Watershed segmentation
+nmask <- watershed(distmap(CC_th), tolerance=5, ext=20)
+display(colorLabels(nmask), all=TRUE)
+```
+
+```{r}
+# Voronoi image tesselation
+voronoiExamp <- propagate(x = nmask, seeds = nmask, lambda = 0.001)
+voronoiPaint <- colorLabels (voronoiExamp)
+display(voronoiPaint, all=TRUE)
+```
+
+```{r}
+CC <- rgbImage(green=2.0*CC_bg, blue=img_median, red=voronoiPaint[ , , , 1])
+display(CC, all = TRUE)
+```
+
+```{r}
+ctmask = opening(img_fhi<0.6, makeBrush(5, shape='disc'))
+cmask = propagate(img_fhi, seeds=nmask, mask=ctmask)
+display(ctmask, all=TRUE)
+```
+
+```{r}
+ctmask = opening(img_fhi>0.1, makeBrush(5, shape='disc'))
+cmask = propagate(img_fhi, seeds=nmask, mask=ctmask)
+display(ctmask, all=TRUE)
+```
+
+```{r}
+segmented = paintObjects(channel(cmask,"gray"), image, col='#ff00ff')
+segmented = paintObjects(channel(ctmask,"gray"), segmented, col='#ffff00')
+display(segmented, all=TRUE)
+```
+
+# Daftar Pustaka
+
+Data Science & Predictive Analytics 
+http://www.socr.umich.edu/people/dinov/courses/DSPA_notes/DSPA_Appendix_6_ImageFilteringSpectralProcessing.html#13_Learning_Activity
+
+
